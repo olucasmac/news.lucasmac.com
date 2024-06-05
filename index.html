@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSS Feed Instagram Style</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333; /* Cinza bem escuro */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            text-align: center;
+            color: #fff;
+            margin-top: 20px;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .header .by-line {
+            font-size: 16px; /* Aumenta o tamanho do texto */
+            margin-top: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .header .by-line img {
+            margin-left: 5px;
+            width: 200px; /* Aumenta o tamanho da imagem */
+            height: auto;
+        }
+        .feed {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+            padding: 20px;
+        }
+        .feed-item {
+            background-color: #fff;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Alinha o conteúdo à esquerda */
+            position: relative; /* Necessário para posicionamento absoluto */
+            text-decoration: none; /* Remove underline do link */
+            color: inherit; /* Herda a cor do texto */
+            padding-bottom: 60px; /* Espaço para os botões e footer */
+            transition: padding-bottom 0.3s ease; /* Transição suave */
+            z-index: 0; /* Garante que o conteúdo do card fique na frente */
+        }
+        .feed-item.no-padding {
+            padding-bottom: 0; /* Remove o padding-bottom */
+        }
+        .feed-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Efeito de hover */
+        }
+        .feed-item img {
+            width: 100%;
+            height: auto;
+        }
+        .feed-item h2 {
+            font-size: 18px; /* Aumenta o tamanho da fonte do título */
+            margin: 10px 15px;
+            text-align: left;
+        }
+        .feed-item p {
+            font-size: 14px;
+            margin: 10px 15px;
+            text-align: left;
+            color: #555;
+        }
+        .feed-item .pubdate {
+            font-size: 12px;
+            margin: 5px 15px 0 15px; /* Remove a margem inferior */
+            text-align: left;
+            color: #999;
+            z-index: 1; /* Garante que a data fique na frente */
+        }
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Alinha logo e botões aos extremos */
+            padding: 5px 10px; /* Reduz a margem superior e inferior */
+            width: 95%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.9); /* Fundo semitransparente */
+            z-index: 1; /* Garante que o footer fique na frente */
+        }
+        .footer img {
+            width: 100px; /* Tamanho adequado da logo */
+            height: auto;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+            z-index: 1; /* Garante que os botões fiquem na frente */
+        }
+        .button-container button {
+            padding: 5px 10px;
+            background-color: #0095f6;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .button-container button:hover {
+            background-color: #007bb5;
+        }
+        .footer .left {
+            display: flex;
+            gap: 10px;
+        }
+        @media (max-width: 900px) {
+            .feed {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 600px) {
+            .feed {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Últimas Notícias</h1>
+        <div class="by-line">
+            by
+            <img src="https://www.gamevicio.com/misc/images/logo-white.webp" alt="GameVicio Logo">
+        </div>
+    </div>
+    <div id="feed" class="feed"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const feedUrl = 'https://www.gamevicio.com/rss/noticias.xml';
+            const corsProxy = 'https://api.allorigins.win/get?url=';
+            const imgProxy = 'https://api.allorigins.win/raw?url=';
+
+            const apiUrl = `${corsProxy}${encodeURIComponent(feedUrl)}`;
+            const logoUrl = `${imgProxy}${encodeURIComponent('https://www.gamevicio.com/misc/images/logo-black.webp')}`;
+
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(data.contents, 'application/xml');
+                    const items = xml.querySelectorAll('item');
+                    const feedContainer = document.getElementById('feed');
+
+                    items.forEach(item => {
+                        const title = decodeHTMLEntities(item.querySelector('title').textContent);
+                        const link = item.querySelector('link').textContent;
+                        const description = item.querySelector('description').textContent;
+                        const pubDate = item.querySelector('pubDate').textContent;
+                        const enclosure = item.querySelector('enclosure');
+                        const image = enclosure ? imgProxy + encodeURIComponent(enclosure.getAttribute('url')) : '';
+
+                        const feedItem = document.createElement('a'); // Troquei de 'div' para 'a'
+                        feedItem.classList.add('feed-item');
+                        feedItem.href = link;
+                        feedItem.target = '_blank'; // Abre o link em uma nova aba
+
+                        if (image) {
+                            const imgElement = document.createElement('img');
+                            imgElement.crossOrigin = 'anonymous'; // Adicionado para uso CORS
+                            imgElement.src = image;
+                            feedItem.appendChild(imgElement);
+                        }
+
+                        const titleElement = document.createElement('h2');
+                        titleElement.textContent = title;
+                        feedItem.appendChild(titleElement);
+
+                        const descriptionElement = document.createElement('p');
+                        descriptionElement.textContent = description;
+                        feedItem.appendChild(descriptionElement);
+
+                        const pubDateElement = document.createElement('p');
+                        pubDateElement.classList.add('pubdate');
+                        pubDateElement.textContent = formatDateToBrazil(pubDate);
+                        feedItem.appendChild(pubDateElement);
+
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.classList.add('button-container');
+
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.textContent = 'Baixar';
+                        downloadBtn.addEventListener('click', function(event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            downloadCardAsImageAndCopyURL(feedItem, downloadBtn, link, title);
+                        });
+                        buttonContainer.appendChild(downloadBtn);
+
+                        const copyBtn = document.createElement('button');
+                        copyBtn.textContent = 'Copiar';
+                        copyBtn.addEventListener('click', function(event) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            copyImageAndURLToClipboard(feedItem, copyBtn, link, title);
+                        });
+                        buttonContainer.appendChild(copyBtn);
+
+                        const footer = document.createElement('div');
+                        footer.classList.add('footer');
+                        footer.innerHTML = `<img src="${logoUrl}" alt="GameVicio Logo">`;
+                        const leftContainer = document.createElement('div');
+                        leftContainer.classList.add('left');
+                        leftContainer.appendChild(buttonContainer);
+                        footer.insertBefore(leftContainer, footer.firstChild);
+                        feedItem.appendChild(footer);
+
+                        feedContainer.appendChild(feedItem);
+                    });
+                })
+                .catch(error => console.error('Error fetching the RSS feed:', error));
+        });
+
+        function decodeHTMLEntities(text) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = text;
+            return textarea.value;
+        }
+
+        function formatDateToBrazil(pubDate) {
+            const date = new Date(pubDate);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        }
+
+        async function downloadCardAsImageAndCopyURL(card, button, url, title) {
+            const buttons = card.querySelector('.button-container');
+            buttons.style.display = 'none'; // Esconde os botões
+            card.classList.add('no-padding'); // Remove o padding-bottom
+
+            try {
+                const canvas = await html2canvas(card, { useCORS: true });
+
+                const link = document.createElement('a');
+                link.download = 'card.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                await navigator.clipboard.writeText(`${title}: ${url}`);
+                alert('Imagem baixada e URL copiada para a área de transferência!');
+            } catch (err) {
+                console.error('Erro ao baixar imagem e copiar URL: ', err);
+            } finally {
+                buttons.style.display = 'flex'; // Mostra os botões novamente
+                card.classList.remove('no-padding'); // Restaura o padding-bottom
+            }
+        }
+
+        async function copyImageAndURLToClipboard(card, button, url, title) {
+            const buttons = card.querySelector('.button-container');
+            buttons.style.display = 'none'; // Esconde os botões
+            card.classList.add('no-padding'); // Remove o padding-bottom
+
+            try {
+                const canvas = await html2canvas(card, { useCORS: true });
+
+                const blob = await new Promise(resolve => canvas.toBlob(resolve));
+                const clipboardItems = [
+                    new ClipboardItem({
+                        [blob.type]: blob,
+                        'text/plain': new Blob([`${title}: ${url}`], { type: 'text/plain' })
+                    })
+                ];
+
+                await navigator.clipboard.write(clipboardItems);
+                alert('Imagem e URL copiadas para a área de transferência!');
+            } catch (err) {
+                console.error('Erro ao copiar imagem e URL: ', err);
+            } finally {
+                buttons.style.display = 'flex'; // Mostra os botões novamente
+                card.classList.remove('no-padding'); // Restaura o padding-bottom
+            }
+        }
+    </script>
+</body>
+</html>
