@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Últimas notícias</title>
+    <title>RSS Feed Instagram Style</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -138,42 +138,32 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const feeds = [
-                {
-                    url: 'https://www.gamevicio.com/rss/noticias.xml',
-                    apiUrl: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://www.gamevicio.com/rss/noticias.xml')}`
-                },
-                {
-                    url: 'https://br.ign.com/feed.xml',
-                    apiUrl: `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent('https://br.ign.com/feed.xml')}`
-                }
+                'https://www.gamevicio.com/rss/noticias.xml',
+                'https://br.ign.com/feed.xml'
             ];
 
-            feeds.forEach(feed => {
-                fetch(feed.apiUrl)
+            feeds.forEach(feedUrl => {
+                fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(feedUrl)}`)
                     .then(response => response.json())
                     .then(data => {
-                        const channelTitle = data.feed.title;
-                        const items = data.items;
+                        const parser = new DOMParser();
+                        const xml = parser.parseFromString(data.contents, 'application/xml');
+                        const items = xml.querySelectorAll('item');
+                        const channelTitle = xml.querySelector('channel > title').textContent;
                         const feedContainer = document.getElementById('feed');
 
                         items.forEach(item => {
-                            const title = decodeHTMLEntities(item.title);
-                            const link = item.link;
-                            const description = decodeHTMLEntities(item.description);
-                            const pubDate = item.pubDate;
-                            const image = item.enclosure ? `https://api.allorigins.win/raw?url=${encodeURIComponent(item.enclosure.link)}` : '';
+                            const title = decodeHTMLEntities(item.querySelector('title').textContent);
+                            const link = item.querySelector('link').textContent;
+                            const description = decodeHTMLEntities(item.querySelector('description').textContent);
+                            const pubDate = item.querySelector('pubDate').textContent;
+                            const enclosure = item.querySelector('enclosure');
+                            const imageUrl = enclosure ? enclosure.getAttribute('url') : '';
 
                             const feedItem = document.createElement('a'); // Troquei de 'div' para 'a'
                             feedItem.classList.add('feed-item');
                             feedItem.href = link;
                             feedItem.target = '_blank'; // Abre o link em uma nova aba
-
-                            if (image) {
-                                const imgElement = document.createElement('img');
-                                imgElement.crossOrigin = 'anonymous'; // Adicionado para uso CORS
-                                imgElement.src = image;
-                                feedItem.appendChild(imgElement);
-                            }
 
                             const titleElement = document.createElement('h2');
                             titleElement.textContent = title;
@@ -192,6 +182,17 @@
                             pubDateElement.classList.add('pubdate');
                             pubDateElement.textContent = formatDateToBrazil(pubDate);
                             feedItem.appendChild(pubDateElement);
+
+                            if (imageUrl) {
+                                fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`)
+                                    .then(response => response.blob())
+                                    .then(blob => {
+                                        const imgElement = document.createElement('img');
+                                        imgElement.src = URL.createObjectURL(blob);
+                                        feedItem.insertBefore(imgElement, titleElement);
+                                    })
+                                    .catch(error => console.error('Error fetching the image:', error));
+                            }
 
                             const buttonContainer = document.createElement('div');
                             buttonContainer.classList.add('button-container');
@@ -254,7 +255,7 @@
         async function downloadCardAsImageAndCopyURL(card, button, url, title) {
             const buttons = card.querySelector('.button-container');
             buttons.style.display = 'none'; // Esconde os botões
-            card.classList.add('no-padding'); // Remove o padding-bottom
+            // card.classList.add('no-padding'); // Remove o padding-bottom
 
             try {
                 const canvas = await html2canvas(card, { useCORS: true });
