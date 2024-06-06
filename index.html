@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Últimas notícias</title>
+    <title>Infinito³ News - Últimas notícias do mundo Tech</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,7 +17,7 @@
         .header {
             text-align: center;
             color: #fff;
-            margin-top: 20px;
+            margin: 25px;
         }
         .header h1 {
             margin: 0;
@@ -27,8 +27,8 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             max-width: 1000px;
-            width: 100%;
-            padding: 20px;
+            width: 95%;
+            padding: 10px;
         }
         .feed-item {
             background-color: #fff;
@@ -42,7 +42,7 @@
             position: relative; /* Necessário para posicionamento absoluto */
             text-decoration: none; /* Remove underline do link */
             color: inherit; /* Herda a cor do texto */
-            padding-bottom: 20px; /* Espaço para os botões e footer */
+            padding-bottom: 10px; /* Espaço para os botões e footer */
             transition: padding-bottom 0.3s ease; /* Transição suave */
             z-index: 0; /* Garante que o conteúdo do card fique na frente */
         }
@@ -78,7 +78,7 @@
         }
         .feed-item .pubdate {
             font-size: 12px;
-            margin: 5px 15px 0 15px; /* Remove a margem inferior */
+            margin: 5px 15px 5px 15px; /* Remove a margem inferior */
             text-align: left;
             color: #999;
             z-index: 1; /* Garante que a data fique na frente */
@@ -93,13 +93,28 @@
                 grid-template-columns: 1fr;
             }
         }
+        .site-footer {
+            width: 97%;
+            text-align: center;
+            color: #fff;
+            padding: 20px;
+            background-color: #222; /* Fundo um pouco mais claro que o resto da página */
+        }
+        .site-footer img {
+            margin-top: 10px;
+            height: 40px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>Últimas Notícias</h1>
+        <h1>Infinito³ News</h1>
     </div>
     <div id="feed" class="feed"></div>
+    <div class="site-footer">
+        <p>Infinito³ News é apenas um agregador de notícias sobre tecnologia.</p>
+        <img src="https://infinitoaocubo.com.br/img/infinito3.png" alt="Infinito ao Cubo">
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
