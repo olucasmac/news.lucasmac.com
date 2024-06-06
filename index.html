@@ -17,7 +17,7 @@
         .header {
             text-align: center;
             color: #fff;
-            margin: 25px;
+            margin-top: 20px;
         }
         .header h1 {
             margin: 0;
@@ -27,8 +27,8 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             max-width: 1000px;
-            width: 95%;
-            padding: 10px;
+            width: 100%;
+            padding: 20px;
         }
         .feed-item {
             background-color: #fff;
@@ -42,7 +42,7 @@
             position: relative; /* Necessário para posicionamento absoluto */
             text-decoration: none; /* Remove underline do link */
             color: inherit; /* Herda a cor do texto */
-            padding-bottom: 10px; /* Espaço para os botões e footer */
+            padding-bottom: 10px; /* Espaço para o pubDate */
             transition: padding-bottom 0.3s ease; /* Transição suave */
             z-index: 0; /* Garante que o conteúdo do card fique na frente */
         }
@@ -94,7 +94,7 @@
             }
         }
         .site-footer {
-            width: 97%;
+            width: 100%;
             text-align: center;
             color: #fff;
             padding: 20px;
@@ -119,31 +119,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const feeds = [
-                'https://www.gamevicio.com/rss/noticias.xml',
-                'https://br.ign.com/feed.xml'
+                'https://api.allorigins.win/get?url=https://www.gamevicio.com/rss/noticias.xml',
+                'https://api.allorigins.win/get?url=https://br.ign.com/feed.xml'
             ];
 
             feeds.forEach(feedUrl => {
                 fetch(feedUrl)
-                    .then(response => response.text())
+                    .then(response => response.json())
                     .then(data => {
                         const parser = new DOMParser();
-                        const xml = parser.parseFromString(data, 'application/xml');
+                        const xml = parser.parseFromString(data.contents, 'application/xml');
                         const items = xml.querySelectorAll('item');
                         const channelTitle = xml.querySelector('channel > title').textContent;
                         const feedContainer = document.getElementById('feed');
 
                         items.forEach(item => {
-                            const categories = item.querySelectorAll('category');
-                            const isAffiliation = Array.from(categories).some(category => category.textContent === 'Affiliation');
-                            if (isAffiliation) return;
+                            // Verifica se a categoria é 'Affiliation'
+                            const category = item.querySelector('category');
+                            if (category && category.textContent === 'Affiliation') {
+                                return; // Pula este item
+                            }
 
                             const title = decodeHTMLEntities(item.querySelector('title').textContent);
                             const link = item.querySelector('link').textContent;
                             const description = decodeHTMLEntities(item.querySelector('description').textContent);
                             const pubDate = item.querySelector('pubDate').textContent;
                             const enclosure = item.querySelector('enclosure');
-                            const imageUrl = enclosure ? `http://localhost:3000/image?url=${encodeURIComponent(enclosure.getAttribute('url'))}` : '';
+                            const imageUrl = enclosure ? enclosure.getAttribute('url') : '';
 
                             const feedItem = document.createElement('a'); // Troquei de 'div' para 'a'
                             feedItem.classList.add('feed-item');
@@ -169,14 +171,9 @@
                             feedItem.appendChild(pubDateElement);
 
                             if (imageUrl) {
-                                fetch(imageUrl)
-                                    .then(response => response.blob())
-                                    .then(blob => {
-                                        const imgElement = document.createElement('img');
-                                        imgElement.src = URL.createObjectURL(blob);
-                                        feedItem.insertBefore(imgElement, titleElement);
-                                    })
-                                    .catch(error => console.error('Error fetching the image:', error));
+                                const imgElement = document.createElement('img');
+                                imgElement.src = imageUrl;
+                                feedItem.insertBefore(imgElement, titleElement);
                             }
 
                             feedContainer.appendChild(feedItem);
