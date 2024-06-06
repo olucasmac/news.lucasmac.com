@@ -134,6 +134,10 @@
                         const feedContainer = document.getElementById('feed');
 
                         items.forEach(item => {
+                            const categories = item.querySelectorAll('category');
+                            const isAffiliation = Array.from(categories).some(category => category.textContent === 'Affiliation');
+                            if (isAffiliation) return;
+
                             const title = decodeHTMLEntities(item.querySelector('title').textContent);
                             const link = item.querySelector('link').textContent;
                             const description = decodeHTMLEntities(item.querySelector('description').textContent);
